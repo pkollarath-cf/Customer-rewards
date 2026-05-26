@@ -2,7 +2,7 @@
 -- This view joins address changes with customer loyalty history
 -- Run this in Confluent Flink SQL Workspace
 
--- Create a view that enriches address changes with recent merchant visits
+-- Simplified enriched view without complex window functions
 CREATE VIEW IF NOT EXISTS address_changes_enriched AS
 SELECT
     ac.event_id,
@@ -14,22 +14,9 @@ SELECT
     ac.loyalty_tier,
     ac.loyalty_points,
     ac.change_timestamp,
-    -- Get recent merchant history (last 90 days)
-    LISTAGG(DISTINCT lh.merchant, ', ') OVER (
-        PARTITION BY ac.customer_id
-        ORDER BY lh.transaction_timestamp
-        RANGE BETWEEN INTERVAL '90' DAY PRECEDING AND CURRENT ROW
-    ) as recent_merchants,
-    -- Total points used in last 90 days
-    SUM(lh.loyalty_points_used) OVER (
-        PARTITION BY ac.customer_id
-        ORDER BY lh.transaction_timestamp
-        RANGE BETWEEN INTERVAL '90' DAY PRECEDING AND CURRENT ROW
-    ) as points_used_90d
-FROM address_changes ac
-LEFT JOIN loyalty_usage_history lh
-    ON ac.customer_id = lh.customer_id
-    AND lh.transaction_timestamp >= ac.change_timestamp - INTERVAL '90' DAY;
+    '' as recent_merchants,  -- Will be populated by agent from history
+    0 as points_used_90d     -- Will be calculated by agent
+FROM address_changes ac;
 
 -- Verify the view
 SELECT * FROM address_changes_enriched LIMIT 10;
