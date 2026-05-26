@@ -1,0 +1,90 @@
+{
+  "merchants": [
+    {
+      "name": "Whole Foods Market",
+      "category": "Grocery",
+      "zip_codes": ["10001", "90210", "60601", "02101", "98101"]
+    },
+    {
+      "name": "Starbucks",
+      "category": "Coffee Shop",
+      "zip_codes": ["10001", "90210", "60601", "77001", "33101", "02101", "98101", "30301", "85001", "19101"]
+    },
+    {
+      "name": "The Ivy Restaurant",
+      "category": "Fine Dining",
+      "zip_codes": ["90210", "10001", "33101"]
+    },
+    {
+      "name": "Rodeo Drive Boutiques",
+      "category": "Luxury Shopping",
+      "zip_codes": ["90210"]
+    },
+    {
+      "name": "Pike Place Market",
+      "category": "Local Market",
+      "zip_codes": ["98101"]
+    },
+    {
+      "name": "Navy Pier",
+      "category": "Entertainment",
+      "zip_codes": ["60601"]
+    },
+    {
+      "name": "South Beach Restaurants",
+      "category": "Dining",
+      "zip_codes": ["33101"]
+    },
+    {
+      "name": "Faneuil Hall Marketplace",
+      "category": "Shopping & Dining",
+      "zip_codes": ["02101"]
+    },
+    {
+      "name": "Desert Botanical Garden",
+      "category": "Attractions",
+      "zip_codes": ["85001"]
+    },
+    {
+      "name": "Space Needle",
+      "category": "Tourist Attraction",
+      "zip_codes": ["98101"]
+    }
+  ],
+  "loyalty_redemption_offers": [
+    {
+      "tier": "Basic",
+      "offers": [
+        "Redeem 5,000 points for $25 at local restaurants",
+        "Get 2x points on grocery purchases for 30 days"
+      ]
+    },
+    {
+      "tier": "Silver",
+      "offers": [
+        "Redeem 10,000 points for $75 at partner merchants",
+        "Exclusive access to local events",
+        "3x points on dining and entertainment"
+      ]
+    },
+    {
+      "tier": "Gold",
+      "offers": [
+        "Redeem 15,000 points for $150 travel credit",
+        "Complimentary airport lounge access in new city",
+        "Priority reservations at fine dining establishments",
+        "4x points on all purchases for first month"
+      ]
+    },
+    {
+      "tier": "Platinum",
+      "offers": [
+        "Redeem 25,000 points for $300 luxury experience",
+        "Personal concierge service in new city",
+        "Exclusive invitation to Platinum member events",
+        "5x points on all purchases for first 60 days",
+        "Complimentary hotel upgrades"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+# Confluent Cloud API credentials
+# Create at: https://confluent.cloud/settings/api-keys
+# This is a Cloud API Key (not a cluster-specific key)
+confluent_cloud_api_key    = "YOUR_CLOUD_API_KEY"
+confluent_cloud_api_secret = "YOUR_CLOUD_API_SECRET"
+
+# AWS Bedrock credentials
+# Create IAM user with Bedrock access
+# Enable Claude Sonnet 4.5 in AWS Bedrock console first
+aws_access_key     = "YOUR_AWS_ACCESS_KEY"
+aws_secret_key     = "YOUR_AWS_SECRET_KEY"
+aws_bedrock_region = "us-east-1"
+
+# Optional: Customize resource names and configuration
+# environment_name          = "customer-rewards-demo"
+# kafka_cluster_name        = "rewards-cluster"
+# flink_compute_pool_name   = "rewards-flink-pool"
+# service_account_name      = "rewards-service-account"
+
+# Optional: Change cloud provider and region
+# kafka_cluster_cloud       = "AWS"    # AWS, GCP, or AZURE
+# kafka_cluster_region      = "us-east-1"
+# flink_compute_pool_cloud  = "AWS"
+# flink_compute_pool_region = "us-east-1"
+# flink_max_cfu             = 5
