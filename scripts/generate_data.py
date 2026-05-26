@@ -172,22 +172,82 @@ def generate_address_change(customer: Dict[str, Any]) -> Dict[str, Any]:
         'change_timestamp': datetime_to_millis(datetime.now())
     }
 
-def get_avro_serializer(schema_registry_client: SchemaRegistryClient, topic: str) -> AvroSerializer:
-    """Get Avro serializer for a topic using schema from Schema Registry."""
+# Avro Schema Definitions
+CUSTOMER_DETAILS_SCHEMA = """{
+  "type": "record",
+  "name": "CustomerDetails",
+  "namespace": "com.rewards.demo",
+  "fields": [
+    {"name": "customer_id", "type": "string"},
+    {"name": "name", "type": "string"},
+    {"name": "permanent_address", "type": ["null", "string"], "default": null},
+    {"name": "current_address", "type": ["null", "string"], "default": null},
+    {"name": "current_zip", "type": "string"},
+    {"name": "loyalty_tier", "type": ["null", "string"], "default": null},
+    {"name": "loyalty_points", "type": ["null", "int"], "default": null},
+    {"name": "email", "type": "string"},
+    {"name": "updated_at", "type": ["null", "long"], "default": null, "logicalType": "timestamp-millis"}
+  ]
+}"""
+
+LOYALTY_USAGE_SCHEMA = """{
+  "type": "record",
+  "name": "LoyaltyUsageHistory",
+  "namespace": "com.rewards.demo",
+  "fields": [
+    {"name": "usage_id", "type": "string"},
+    {"name": "customer_id", "type": "string"},
+    {"name": "merchant", "type": "string"},
+    {"name": "product_service", "type": ["null", "string"], "default": null},
+    {"name": "loyalty_points_used", "type": ["null", "int"], "default": null},
+    {"name": "transaction_timestamp", "type": ["null", "long"], "default": null, "logicalType": "timestamp-millis"}
+  ]
+}"""
+
+ADDRESS_CHANGES_SCHEMA = """{
+  "type": "record",
+  "name": "AddressChanges",
+  "namespace": "com.rewards.demo",
+  "fields": [
+    {"name": "event_id", "type": "string"},
+    {"name": "customer_id", "type": "string"},
+    {"name": "old_zip", "type": ["null", "string"], "default": null},
+    {"name": "new_zip", "type": "string"},
+    {"name": "change_timestamp", "type": ["null", "long"], "default": null, "logicalType": "timestamp-millis"}
+  ]
+}"""
+
+TOPIC_SCHEMAS = {
+    'customer_details': CUSTOMER_DETAILS_SCHEMA,
+    'loyalty_usage_history': LOYALTY_USAGE_SCHEMA,
+    'address_changes': ADDRESS_CHANGES_SCHEMA
+}
+
+def register_schema_if_missing(schema_registry_client: SchemaRegistryClient, topic: str, schema_str: str):
+    """Register schema in Schema Registry if it doesn't exist."""
+    from confluent_kafka.schema_registry import Schema
+
     subject = f"{topic}-value"
     try:
-        # Fetch the latest schema from Schema Registry
-        schema_version = schema_registry_client.get_latest_version(subject)
-        schema_str = schema_version.schema.schema_str
+        # Check if schema exists
+        schema_registry_client.get_latest_version(subject)
+        print(f"  ✓ Schema exists for {topic}")
+    except Exception:
+        # Schema doesn't exist, register it
+        try:
+            schema = Schema(schema_str, schema_type="AVRO")
+            schema_id = schema_registry_client.register_schema(subject_name=subject, schema=schema)
+            print(f"  ✓ Registered schema for {topic} (ID: {schema_id})")
+        except Exception as e:
+            raise ValueError(f"Failed to register schema for {topic}: {e}")
 
-        # Create Avro serializer
-        return AvroSerializer(
-            schema_registry_client,
-            schema_str,
-            lambda obj, ctx: obj  # Pass dict as-is
-        )
-    except Exception as e:
-        raise ValueError(f"Failed to get schema for {topic}: {e}")
+def get_avro_serializer(schema_registry_client: SchemaRegistryClient, topic: str, schema_str: str) -> AvroSerializer:
+    """Get Avro serializer for a topic."""
+    return AvroSerializer(
+        schema_registry_client,
+        schema_str,
+        lambda obj, ctx: obj  # Pass dict as-is
+    )
 
 def produce_avro_message(
     producer: Producer,
@@ -225,18 +285,24 @@ def main():
     producer = create_producer()
     schema_registry_client = get_schema_registry_client()
 
-    # Create Avro serializers for each topic
-    print("📋 Fetching schemas from Schema Registry...")
+    # Register schemas in Schema Registry if they don't exist
+    print("📋 Registering schemas in Schema Registry...")
     try:
-        customer_serializer = get_avro_serializer(schema_registry_client, 'customer_details')
-        loyalty_serializer = get_avro_serializer(schema_registry_client, 'loyalty_usage_history')
-        address_serializer = get_avro_serializer(schema_registry_client, 'address_changes')
-        print("✓ Schemas loaded\n")
+        register_schema_if_missing(schema_registry_client, 'customer_details', CUSTOMER_DETAILS_SCHEMA)
+        register_schema_if_missing(schema_registry_client, 'loyalty_usage_history', LOYALTY_USAGE_SCHEMA)
+        register_schema_if_missing(schema_registry_client, 'address_changes', ADDRESS_CHANGES_SCHEMA)
+        print("✓ All schemas ready\n")
     except Exception as e:
-        print(f"❌ ERROR: Failed to load schemas: {e}")
-        print("\nMake sure Flink tables have been created first (terraform apply).")
-        print("Tables automatically register schemas in Schema Registry.")
+        print(f"❌ ERROR: Failed to register schemas: {e}")
+        print("\nCheck your Schema Registry credentials in .env file.")
         return
+
+    # Create Avro serializers for each topic
+    print("📋 Creating Avro serializers...")
+    customer_serializer = get_avro_serializer(schema_registry_client, 'customer_details', CUSTOMER_DETAILS_SCHEMA)
+    loyalty_serializer = get_avro_serializer(schema_registry_client, 'loyalty_usage_history', LOYALTY_USAGE_SCHEMA)
+    address_serializer = get_avro_serializer(schema_registry_client, 'address_changes', ADDRESS_CHANGES_SCHEMA)
+    print("✓ Serializers created\n")
 
     # Generate 100 customers
     print("📝 Generating 100 customers...")
