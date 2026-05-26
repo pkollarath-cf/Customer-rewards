@@ -1,6 +1,11 @@
 -- Verify Tables Created by Terraform
 -- Run this in Confluent Flink SQL Workspace
 
+-- IMPORTANT: First set the catalog and database
+-- USE CATALOG `<environment-id>`;
+-- USE `<kafka-cluster-id>`;
+-- Get IDs from: terraform output environment_id / kafka_cluster_id
+
 -- 1. Show all tables
 SHOW TABLES;
 

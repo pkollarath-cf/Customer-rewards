@@ -39,8 +39,8 @@ Personalized Recommendations (Kafka Topic)
 ### 1. Clone the Repository
 
 ```bash
-git clone <your-repo-url>
-cd customer-rewards-demo
+git clone https://github.com/pkollarath-cf/Customer-rewards.git
+cd Customer-rewards
 ```
 
 ### 2. Get Confluent Cloud API Keys
@@ -171,7 +171,25 @@ This will:
 https://confluent.cloud/environments/<env-id>/flink
 ```
 
-**Copy and paste** the contents of `sql/03_run_agent.sql` into Flink SQL editor and run it.
+**IMPORTANT: Set the catalog and database first:**
+
+Before running any SQL, you must set the current catalog and database in the Flink SQL Workspace:
+
+1. Click **"Set current catalog and database"** in the Flink SQL editor (or run these commands):
+   ```sql
+   USE CATALOG `<your-environment-id>`;
+   USE `<your-kafka-cluster-id>`;
+   ```
+
+2. Get these IDs from Terraform outputs:
+   ```bash
+   terraform output environment_id
+   terraform output kafka_cluster_id
+   ```
+
+**Now run the agent SQL:**
+
+Copy and paste the contents of `sql/03_run_agent.sql` into Flink SQL editor and run it.
 
 This creates `address_change_recommendations` table and starts the AI agent job that:
 - Reads each address change event (with embedded customer details)

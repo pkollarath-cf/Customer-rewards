@@ -2,6 +2,11 @@
 -- This creates a continuously running job that processes each address change
 -- Run this in Confluent Flink SQL Workspace
 
+-- IMPORTANT: First set the catalog and database
+-- USE CATALOG `<environment-id>`;
+-- USE `<kafka-cluster-id>`;
+-- Get IDs from: terraform output environment_id / kafka_cluster_id
+
 CREATE TABLE address_change_recommendations AS
 SELECT
     ac.event_id,

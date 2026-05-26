@@ -1,6 +1,11 @@
 -- Example Queries for Demo
 -- Run these in Confluent Flink SQL Workspace to explore the data
 
+-- IMPORTANT: First set the catalog and database
+-- USE CATALOG `<environment-id>`;
+-- USE `<kafka-cluster-id>`;
+-- Get IDs from: terraform output environment_id / kafka_cluster_id
+
 -- 1. View Recent Recommendations (Last Hour)
 SELECT
     customer_name,

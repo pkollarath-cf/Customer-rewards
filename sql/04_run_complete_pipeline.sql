@@ -2,6 +2,11 @@
 -- Run this after terraform apply and after running generate_data.py
 -- This starts the AI agent processing job
 
+-- IMPORTANT: First set the catalog and database
+-- USE CATALOG `<environment-id>`;
+-- USE `<kafka-cluster-id>`;
+-- Get IDs from: terraform output environment_id / kafka_cluster_id
+
 -- Run the agent on each address change and store results
 CREATE TABLE IF NOT EXISTS address_change_recommendations AS
 SELECT

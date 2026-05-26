@@ -14,8 +14,8 @@ Get the demo running in 10 minutes!
 ### 1. Clone the Repo (30 seconds)
 
 ```bash
-git clone <your-repo-url>
-cd customer-rewards-demo
+git clone https://github.com/pkollarath-cf/Customer-rewards.git
+cd Customer-rewards
 ```
 
 ### 2. Get Confluent Cloud API Key (2 minutes)
@@ -84,7 +84,12 @@ python generate_data.py
 ### 7. Run the Agent
 
 1. Open Confluent Cloud UI → Flink SQL Workspace
-2. Copy & paste from `sql/02_create_enriched_view.sql` → Run
+2. **Set catalog and database first:**
+   ```sql
+   USE CATALOG `<environment-id>`;
+   USE `<kafka-cluster-id>`;
+   ```
+   Get IDs from: `terraform output environment_id` and `terraform output kafka_cluster_id`
 3. Copy & paste from `sql/03_run_agent.sql` → Run
 4. View results:
    ```sql
