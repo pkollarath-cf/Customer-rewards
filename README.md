@@ -144,71 +144,62 @@ This will:
 
 ## Running the Demo
 
-### 1. Run SQL Queries (Start Processing Jobs)
+### 1. Generate Sample Data FIRST
 
-Terraform created the **definitions** (tables, agent, model). Now you need to **start the processing**:
+**Important:** Generate data before running SQL queries, so tables have data to join.
+
+```bash
+cd scripts
+python generate_data.py
+```
+
+This will:
+- Register Avro schemas in Schema Registry
+- Produce 100 customers with loyalty history
+- Start generating address change events (1 every 5 seconds)
+
+**Let it run for 30-60 seconds** to populate data, then press `Ctrl+C` to stop (or leave running).
+
+### 2. Run SQL to Start Processing
 
 **Open Flink SQL Workspace:**
 ```
 https://confluent.cloud/environments/<env-id>/flink
 ```
 
-**Run these queries in order:**
+**Option A: Run Complete Pipeline (Recommended)**
 
-**Step 1: Create Enriched View** (from `sql/02_create_enriched_view.sql`)
-```sql
-CREATE VIEW IF NOT EXISTS address_changes_enriched AS
-SELECT
-    ac.event_id,
-    ac.customer_id,
-    ac.customer_name,
-    ac.old_zip,
-    ac.new_zip,
-    ac.loyalty_tier,
-    ac.loyalty_points,
-    LISTAGG(DISTINCT lh.merchant, ', ') as recent_merchants
-FROM address_changes ac
-LEFT JOIN loyalty_usage_history lh
-    ON ac.customer_id = lh.customer_id;
-```
+Copy and paste the entire contents of `sql/04_run_complete_pipeline.sql` into Flink SQL editor.
 
-**Step 2: Start Agent Processing Job** (from `sql/03_run_agent.sql`)
-```sql
-CREATE TABLE address_change_recommendations AS
-SELECT
-    ace.event_id,
-    ace.customer_id,
-    ace.customer_name,
-    ace.old_zip,
-    ace.new_zip,
-    ace.loyalty_tier,
-    ace.loyalty_points,
-    agent_result.status,
-    agent_result.response as recommendations
-FROM address_changes_enriched ace,
-LATERAL TABLE(
-    AI_RUN_AGENT(
-        'rewards_recommendation_agent',
-        CONCAT('Customer: ', ace.customer_name, '...'),
-        ace.event_id,
-        MAP['debug', 'false']
-    )
-) as agent_result(status, response);
-```
+This creates:
+1. `address_change_enriched` - Joins address changes with customer details  
+2. `address_change_recommendations` - Runs AI agent continuously
 
-This query **runs continuously** as a Flink job, processing each address change event.
+**Option B: Run Step-by-Step**
+
+1. Run `sql/02_create_enriched_view.sql` - Creates enriched table
+2. Wait for job to start (check Jobs tab)
+3. Run `sql/03_run_agent.sql` - Starts AI agent processing
 
 **Check Job Status:**
 - Click **"Jobs"** tab in Flink console
-- You should see `address_change_recommendations` with status **RUNNING** ✓
+- You should see jobs with status **RUNNING** ✓
 
-### 2. Generate Address Changes
+### 3. View Recommendations
 
-Run the data generator:
+In Flink SQL Workspace:
 
-```bash
-cd scripts
-python generate_data.py
+```sql
+SELECT 
+    customer_name,
+    old_zip,
+    new_zip,
+    loyalty_tier,
+    recommendations,
+    change_timestamp
+FROM address_change_recommendations
+ORDER BY change_timestamp DESC
+LIMIT 10;
 ```
 
 ### 3. Monitor Results

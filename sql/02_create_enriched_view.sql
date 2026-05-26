@@ -1,5 +1,4 @@
--- Create Enriched Address Changes Table
--- This joins address changes with customer details
+-- Step 1: Create enriched address changes table (join with customer details)
 -- Run this in Confluent Flink SQL Workspace
 
 CREATE TABLE IF NOT EXISTS address_change_enriched AS
@@ -17,5 +16,5 @@ FROM address_changes ac
 JOIN customer_details cd
   ON ac.customer_id = cd.customer_id;
 
--- Verify the enriched table
-SELECT * FROM address_change_enriched LIMIT 10;
+-- Verify the enriched table (optional - run separately)
+-- SELECT * FROM address_change_enriched LIMIT 10;
