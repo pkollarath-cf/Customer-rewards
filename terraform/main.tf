@@ -379,7 +379,6 @@ resource "confluent_flink_statement" "bedrock_connection" {
     WITH (
       'type' = 'bedrock',
       'endpoint' = 'https://bedrock-runtime.${var.aws_bedrock_region}.amazonaws.com',
-      'aws-region' = '${var.aws_bedrock_region}',
       'aws-access-key' = '${var.aws_access_key}',
       'aws-secret-key' = '${var.aws_secret_key}'
     );
