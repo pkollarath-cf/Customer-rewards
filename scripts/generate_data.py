@@ -7,6 +7,9 @@ import random
 from datetime import datetime, timedelta
 from typing import Dict, Any
 from confluent_kafka import Producer
+from confluent_kafka.schema_registry import SchemaRegistryClient
+from confluent_kafka.schema_registry.avro import AvroSerializer
+from confluent_kafka.serialization import SerializationContext, MessageField
 from faker import Faker
 from dotenv import load_dotenv
 
@@ -36,11 +39,38 @@ def get_kafka_config() -> Dict[str, str]:
         'sasl.password': api_secret,
     }
 
+def get_schema_registry_client() -> SchemaRegistryClient:
+    """Get Schema Registry client."""
+    url = os.getenv('SCHEMA_REGISTRY_URL')
+    api_key = os.getenv('SCHEMA_REGISTRY_API_KEY')
+    api_secret = os.getenv('SCHEMA_REGISTRY_API_SECRET')
+
+    if not all([url, api_key, api_secret]):
+        raise ValueError(
+            "Missing Schema Registry configuration. Please ensure SCHEMA_REGISTRY_URL, "
+            "SCHEMA_REGISTRY_API_KEY, and SCHEMA_REGISTRY_API_SECRET are set in your .env file."
+        )
+
+    return SchemaRegistryClient({
+        'url': url,
+        'basic.auth.user.info': f"{api_key}:{api_secret}"
+    })
+
+def datetime_to_millis(dt) -> int:
+    """Convert datetime or ISO string to milliseconds since epoch."""
+    if isinstance(dt, str):
+        if dt.endswith('Z'):
+            dt = dt[:-1] + '+00:00'
+        dt = datetime.fromisoformat(dt)
+    if isinstance(dt, datetime):
+        return int(dt.timestamp() * 1000)
+    return dt
+
 def create_producer() -> Producer:
     """Create a Kafka producer."""
     config = get_kafka_config()
     config.update({
-        'client.id': 'amex-demo-producer',
+        'client.id': 'rewards-demo-producer',
         'acks': 'all',
         'compression.type': 'snappy',
     })
@@ -104,7 +134,7 @@ def generate_customer(customer_id: str) -> Dict[str, Any]:
         'loyalty_tier': loyalty_tier,
         'loyalty_points': loyalty_points,
         'email': fake.email(),
-        'updated_at': datetime.now().isoformat()
+        'updated_at': datetime_to_millis(datetime.now())
     }
 
 def generate_loyalty_usage(customer_id: str, count: int = 5) -> list:
@@ -122,7 +152,7 @@ def generate_loyalty_usage(customer_id: str, count: int = 5) -> list:
             'merchant': merchant,
             'product_service': product_service,
             'loyalty_points_used': points_used,
-            'transaction_timestamp': timestamp.isoformat()
+            'transaction_timestamp': datetime_to_millis(timestamp)
         })
     return usage_records
 
@@ -139,21 +169,50 @@ def generate_address_change(customer: Dict[str, Any]) -> Dict[str, Any]:
         'customer_id': customer['customer_id'],
         'old_zip': old_zip,
         'new_zip': new_zip,
-        'change_timestamp': datetime.now().isoformat()
+        'change_timestamp': datetime_to_millis(datetime.now())
     }
 
-def produce_json_message(producer: Producer, topic: str, key: str, value: Dict[str, Any]):
-    """Produce a JSON message to Kafka."""
+def get_avro_serializer(schema_registry_client: SchemaRegistryClient, topic: str) -> AvroSerializer:
+    """Get Avro serializer for a topic using schema from Schema Registry."""
+    subject = f"{topic}-value"
     try:
+        # Fetch the latest schema from Schema Registry
+        schema_version = schema_registry_client.get_latest_version(subject)
+        schema_str = schema_version.schema.schema_str
+
+        # Create Avro serializer
+        return AvroSerializer(
+            schema_registry_client,
+            schema_str,
+            lambda obj, ctx: obj  # Pass dict as-is
+        )
+    except Exception as e:
+        raise ValueError(f"Failed to get schema for {topic}: {e}")
+
+def produce_avro_message(
+    producer: Producer,
+    topic: str,
+    key: str,
+    value: Dict[str, Any],
+    serializer: AvroSerializer
+):
+    """Produce an Avro message to Kafka."""
+    try:
+        # Serialize value using Avro
+        serialization_context = SerializationContext(topic, MessageField.VALUE)
+        value_bytes = serializer(value, serialization_context)
+
+        # Produce message
         producer.produce(
             topic=topic,
             key=key.encode('utf-8'),
-            value=json.dumps(value).encode('utf-8'),
+            value=value_bytes,
             callback=delivery_callback
         )
         producer.poll(0)
     except Exception as e:
         print(f"❌ ERROR: Failed to produce message: {e}")
+        raise
 
 def main():
     """Main data generation function."""
@@ -162,7 +221,22 @@ def main():
     print("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
     print()
 
+    # Create producer and Schema Registry client
     producer = create_producer()
+    schema_registry_client = get_schema_registry_client()
+
+    # Create Avro serializers for each topic
+    print("📋 Fetching schemas from Schema Registry...")
+    try:
+        customer_serializer = get_avro_serializer(schema_registry_client, 'customer_details')
+        loyalty_serializer = get_avro_serializer(schema_registry_client, 'loyalty_usage_history')
+        address_serializer = get_avro_serializer(schema_registry_client, 'address_changes')
+        print("✓ Schemas loaded\n")
+    except Exception as e:
+        print(f"❌ ERROR: Failed to load schemas: {e}")
+        print("\nMake sure Flink tables have been created first (terraform apply).")
+        print("Tables automatically register schemas in Schema Registry.")
+        return
 
     # Generate 100 customers
     print("📝 Generating 100 customers...")
@@ -173,7 +247,7 @@ def main():
         customers.append(customer)
 
         # Produce to customer_details topic
-        produce_json_message(producer, 'customer_details', customer_id, customer)
+        produce_avro_message(producer, 'customer_details', customer_id, customer, customer_serializer)
 
     producer.flush()
     print(f"✓ Generated {len(customers)} customers\n")
@@ -183,7 +257,7 @@ def main():
     for customer in customers:
         usage_records = generate_loyalty_usage(customer['customer_id'], count=random.randint(3, 8))
         for usage in usage_records:
-            produce_json_message(producer, 'loyalty_usage_history', usage['usage_id'], usage)
+            produce_avro_message(producer, 'loyalty_usage_history', usage['usage_id'], usage, loyalty_serializer)
 
     producer.flush()
     print(f"✓ Generated loyalty usage history\n")
@@ -201,7 +275,7 @@ def main():
             address_change = generate_address_change(customer)
 
             # Produce to address_changes topic
-            produce_json_message(producer, 'address_changes', address_change['event_id'], address_change)
+            produce_avro_message(producer, 'address_changes', address_change['event_id'], address_change, address_serializer)
 
             producer.flush()
 
