@@ -131,10 +131,14 @@ pip install -r requirements.txt
 python generate_data.py
 ```
 
-This will create:
-- 100 customer records
-- Loyalty usage history for each customer
-- Continuous stream of address change events (1 every 5 seconds)
+This will:
+1. **Fetch Avro schemas** from Schema Registry (automatically created by Flink tables)
+2. **Produce messages** using Avro serialization:
+   - 100 customer records
+   - Loyalty usage history for each customer
+   - Continuous stream of address change events (1 every 5 seconds)
+
+**Note:** The data generator uses **Avro serialization with Schema Registry**. Flink tables automatically create and register Avro schemas when you run `terraform apply`.
 
 **Tip:** Let it run for 30-60 seconds to populate initial data, then press `Ctrl+C`
 
