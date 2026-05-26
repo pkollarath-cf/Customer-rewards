@@ -221,6 +221,10 @@ resource "confluent_flink_statement" "customer_details_table" {
       updated_at TIMESTAMP(3) WITH LOCAL TIME ZONE,
       PRIMARY KEY (customer_id) NOT ENFORCED
     ) WITH (
+      'connector' = 'kafka',
+      'value.format' = 'json',
+      'key.format' = 'raw',
+      'key.fields' = 'customer_id',
       'changelog.mode' = 'upsert',
       'kafka.retention.time' = '7 d'
     );
@@ -272,6 +276,10 @@ resource "confluent_flink_statement" "loyalty_usage_history_table" {
       transaction_timestamp TIMESTAMP(3) WITH LOCAL TIME ZONE,
       PRIMARY KEY (usage_id) NOT ENFORCED
     ) WITH (
+      'connector' = 'kafka',
+      'value.format' = 'json',
+      'key.format' = 'raw',
+      'key.fields' = 'usage_id',
       'kafka.retention.time' = '30 d'
     );
   EOT
@@ -321,6 +329,10 @@ resource "confluent_flink_statement" "address_changes_table" {
       change_timestamp TIMESTAMP(3) WITH LOCAL TIME ZONE,
       PRIMARY KEY (event_id) NOT ENFORCED
     ) WITH (
+      'connector' = 'kafka',
+      'value.format' = 'json',
+      'key.format' = 'raw',
+      'key.fields' = 'event_id',
       'kafka.retention.time' = '7 d'
     );
   EOT
