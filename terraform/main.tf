@@ -316,6 +316,10 @@ resource "confluent_flink_statement" "address_changes_table" {
     CREATE TABLE IF NOT EXISTS address_changes (
       event_id STRING NOT NULL,
       customer_id STRING NOT NULL,
+      customer_name STRING NOT NULL,
+      customer_email STRING NOT NULL,
+      loyalty_tier STRING,
+      loyalty_points INT,
       old_zip STRING,
       new_zip STRING NOT NULL,
       change_timestamp TIMESTAMP(3) WITH LOCAL TIME ZONE,

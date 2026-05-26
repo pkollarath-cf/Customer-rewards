@@ -157,7 +157,7 @@ def generate_loyalty_usage(customer_id: str, count: int = 5) -> list:
     return usage_records
 
 def generate_address_change(customer: Dict[str, Any]) -> Dict[str, Any]:
-    """Generate an address change event."""
+    """Generate an address change event with embedded customer details."""
     old_zip = customer['current_zip']
     # Pick a different ZIP code
     new_zip = random.choice([z for z in ZIP_CODES if z != old_zip])
@@ -167,6 +167,10 @@ def generate_address_change(customer: Dict[str, Any]) -> Dict[str, Any]:
     return {
         'event_id': event_id,
         'customer_id': customer['customer_id'],
+        'customer_name': customer['name'],
+        'customer_email': customer['email'],
+        'loyalty_tier': customer['loyalty_tier'],
+        'loyalty_points': customer['loyalty_points'],
         'old_zip': old_zip,
         'new_zip': new_zip,
         'change_timestamp': datetime_to_millis(datetime.now())
@@ -211,6 +215,10 @@ ADDRESS_CHANGES_SCHEMA = """{
   "fields": [
     {"name": "event_id", "type": "string"},
     {"name": "customer_id", "type": "string"},
+    {"name": "customer_name", "type": "string"},
+    {"name": "customer_email", "type": "string"},
+    {"name": "loyalty_tier", "type": ["null", "string"], "default": null},
+    {"name": "loyalty_points", "type": ["null", "int"], "default": null},
     {"name": "old_zip", "type": ["null", "string"], "default": null},
     {"name": "new_zip", "type": "string"},
     {"name": "change_timestamp", "type": ["null", "long"], "default": null, "logicalType": "timestamp-millis"}

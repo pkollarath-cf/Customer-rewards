@@ -160,30 +160,23 @@ This will:
 
 **Let it run for 30-60 seconds** to populate data, then press `Ctrl+C` to stop (or leave running).
 
-### 2. Run SQL to Start Processing
+### 2. Run SQL to Start AI Agent Processing
 
 **Open Flink SQL Workspace:**
 ```
 https://confluent.cloud/environments/<env-id>/flink
 ```
 
-**Option A: Run Complete Pipeline (Recommended)**
+**Copy and paste** the contents of `sql/03_run_agent.sql` into Flink SQL editor and run it.
 
-Copy and paste the entire contents of `sql/04_run_complete_pipeline.sql` into Flink SQL editor.
-
-This creates:
-1. `address_change_enriched` - Joins address changes with customer details  
-2. `address_change_recommendations` - Runs AI agent continuously
-
-**Option B: Run Step-by-Step**
-
-1. Run `sql/02_create_enriched_view.sql` - Creates enriched table
-2. Wait for job to start (check Jobs tab)
-3. Run `sql/03_run_agent.sql` - Starts AI agent processing
+This creates `address_change_recommendations` table and starts the AI agent job that:
+- Reads each address change event (with embedded customer details)
+- Calls the AI agent to generate personalized recommendations  
+- Stores results in the recommendations table
 
 **Check Job Status:**
 - Click **"Jobs"** tab in Flink console
-- You should see jobs with status **RUNNING** ✓
+- You should see `address_change_recommendations` job with status **RUNNING** ✓
 
 ### 3. View Recommendations
 
