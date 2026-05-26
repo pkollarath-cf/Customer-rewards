@@ -349,7 +349,7 @@ resource "confluent_flink_statement" "address_changes_table" {
 
 # Bedrock Connection
 # NOTE: AWS Bedrock requires inference profile format (prefix: us. or eu.)
-# Current model: Claude Sonnet 4 (us.anthropic.claude-sonnet-4-20250514-v1:0)
+# Current model: Claude Sonnet 4.5 (us.anthropic.claude-sonnet-4-5-20250929-v1:0)
 # To use a different model or region, update the endpoint below with the inference profile ID
 resource "confluent_flink_statement" "bedrock_connection" {
   organization {
@@ -381,7 +381,7 @@ resource "confluent_flink_statement" "bedrock_connection" {
     CREATE CONNECTION IF NOT EXISTS `${confluent_environment.demo.id}`.`${confluent_kafka_cluster.basic.id}`.`rewards-bedrock-connection`
     WITH (
       'type' = 'bedrock',
-      'endpoint' = 'https://bedrock-runtime.${var.aws_bedrock_region}.amazonaws.com/model/us.anthropic.claude-sonnet-4-20250514-v1:0/invoke',
+      'endpoint' = 'https://bedrock-runtime.${var.aws_bedrock_region}.amazonaws.com/model/us.anthropic.claude-sonnet-4-5-20250929-v1:0/invoke',
       'aws-access-key' = '${var.aws_access_key}',
       'aws-secret-key' = '${var.aws_secret_key}'
     );

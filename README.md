@@ -53,11 +53,11 @@ cd customer-rewards-demo
 ### 3. Enable AWS Bedrock
 
 1. Go to [AWS Bedrock Console](https://console.aws.amazon.com/bedrock)
-2. Navigate to **Model access** → Request access to **Claude Sonnet 4**
+2. Navigate to **Model access** → Request access to **Claude Sonnet 4.5**
 3. Create IAM user with `AmazonBedrockFullAccess` policy
 4. Generate Access Key and Secret for the IAM user
 
-**Model Used:** Claude Sonnet 4 (`us.anthropic.claude-sonnet-4-20250514-v1:0`)
+**Model Used:** Claude Sonnet 4.5 (`us.anthropic.claude-sonnet-4-5-20250929-v1:0`)
 - Uses AWS Bedrock inference profile format with `us.` prefix (required for on-demand throughput)
 - To use a different model or region, edit `terraform/main.tf` and update the Bedrock connection endpoint
 
