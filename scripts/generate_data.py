@@ -137,10 +137,6 @@ def generate_address_change(customer: Dict[str, Any]) -> Dict[str, Any]:
     return {
         'event_id': event_id,
         'customer_id': customer['customer_id'],
-        'customer_name': customer['name'],
-        'customer_email': customer['email'],
-        'loyalty_tier': customer['loyalty_tier'],
-        'loyalty_points': customer['loyalty_points'],
         'old_zip': old_zip,
         'new_zip': new_zip,
         'change_timestamp': datetime.now().isoformat()
