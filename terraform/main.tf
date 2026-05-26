@@ -378,6 +378,7 @@ resource "confluent_flink_statement" "bedrock_connection" {
     CREATE CONNECTION IF NOT EXISTS `${confluent_environment.demo.id}`.`${confluent_kafka_cluster.basic.id}`.`rewards-bedrock-connection`
     WITH (
       'type' = 'bedrock',
+      'endpoint' = 'https://bedrock-runtime.${var.aws_bedrock_region}.amazonaws.com',
       'bedrock.region' = '${var.aws_bedrock_region}',
       'bedrock.api-key' = '${var.aws_access_key}',
       'bedrock.secret-key' = '${var.aws_secret_key}'
